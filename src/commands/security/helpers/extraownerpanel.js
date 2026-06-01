@@ -17,7 +17,7 @@ function panel(title, content) {
   );
 }
 
-async function extraownerpanel(client, message, args) {
+async function extraownerpanel(client, message) {
   if (!message.guild) return;
 
   const data = AntiNukeMemory.get(message.guild.id);
@@ -35,43 +35,43 @@ async function extraownerpanel(client, message, args) {
 
   const buildList = async () => {
     const current = getPage();
-
     if (!current.length) return "No extra owners found.";
 
-    let text = "";
+    const lines = [];
     for (const id of current) {
       const member = await message.guild.members.fetch(id).catch(() => null);
-      const name = member ? `${member.user.tag} (\`${id}\`)` : `\`${id}\``;
-      text += `• ${name}\n`;
+      lines.push(member ? `- ${member.user.tag} (\`${id}\`)` : `- \`${id}\``);
     }
-
-    return text;
+    return lines.join("\n");
   };
 
   const buildButtons = () =>
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("eo_prev")
-        .setLabel("◀")
+        .setLabel("Prev")
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(page === 0),
       new ButtonBuilder()
         .setCustomId("eo_next")
-        .setLabel("▶")
+        .setLabel("Next")
         .setStyle(ButtonStyle.Secondary)
         .setDisabled((page + 1) * perPage >= entries.length),
       new ButtonBuilder()
         .setCustomId("eo_refresh")
         .setLabel("Refresh")
-        .setStyle(ButtonStyle.Primary),
+        .setStyle(ButtonStyle.Secondary),
     );
+
+  const buildMainContainer = async () => {
+    const container = panel("Extra Owners Panel", await buildList());
+    container.addActionRowComponents(buildButtons());
+    return container;
+  };
 
   const msg = await message.reply({
     flags: MessageFlags.IsComponentsV2,
-    components: [
-      panel("Extra Owners Panel", await buildList()),
-      buildButtons(),
-    ],
+    components: [await buildMainContainer()],
   });
 
   const collector = msg.createMessageComponentCollector({
@@ -86,20 +86,17 @@ async function extraownerpanel(client, message, args) {
         entries = Array.from(newData?.extraOwners || []);
       }
 
-      if (i.customId === "eo_next") {
-        if ((page + 1) * perPage < entries.length) page++;
+      if (i.customId === "eo_next" && (page + 1) * perPage < entries.length) {
+        page++;
       }
 
-      if (i.customId === "eo_prev") {
-        if (page > 0) page--;
+      if (i.customId === "eo_prev" && page > 0) {
+        page--;
       }
 
       await i.update({
         flags: MessageFlags.IsComponentsV2,
-        components: [
-          panel("Extra Owners Panel", await buildList()),
-          buildButtons(),
-        ],
+        components: [await buildMainContainer()],
       });
     } catch (err) {
       console.error("EO Collector Error:", err);
@@ -108,10 +105,12 @@ async function extraownerpanel(client, message, args) {
   });
 
   collector.on("end", async () => {
-    await msg.edit({
-      flags: MessageFlags.IsComponentsV2,
-      components: [panel("Panel Closed", "Session expired.")],
-    }).catch(() => {});
+    await msg
+      .edit({
+        flags: MessageFlags.IsComponentsV2,
+        components: [panel("Panel Closed", "Session expired.")],
+      })
+      .catch(() => {});
   });
 }
 

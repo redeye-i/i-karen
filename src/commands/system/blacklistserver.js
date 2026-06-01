@@ -5,8 +5,6 @@ const {
     ButtonBuilder
 } = require('discord.js');
 
-this.config = require(`${process.cwd()}/config.json`);
-
 module.exports = {
     name: 'blacklistserver',
     aliases: ['bs'],

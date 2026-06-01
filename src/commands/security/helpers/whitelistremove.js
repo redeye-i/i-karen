@@ -76,12 +76,12 @@ async function whitelistremove(client, message, args) {
         })),
     ]);
 
+  const removePanel = panel("Remove Whitelist", `Target: ${target.tag}`);
+  removePanel.addActionRowComponents(new ActionRowBuilder().addComponents(menu));
+
   const msg = await message.reply({
     flags: MessageFlags.IsComponentsV2,
-    components: [
-      panel("Remove Whitelist", `Target: ${target.tag}`),
-      new ActionRowBuilder().addComponents(menu),
-    ],
+    components: [removePanel],
   });
 
   const collector = msg.createMessageComponentCollector({
@@ -97,24 +97,23 @@ async function whitelistremove(client, message, args) {
         selected = i.values;
       }
 
+      const confirmPanel = panel("Confirm Removal", `Removing:\n${selected.map((x) => `• ${pretty(x)}`).join("\n")}`);
+      confirmPanel.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(confirmId)
+            .setLabel("Confirm")
+            .setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder()
+            .setCustomId(cancelId)
+            .setLabel("Cancel")
+            .setStyle(ButtonStyle.Secondary),
+        ),
+      );
+
       return i.update({
         flags: MessageFlags.IsComponentsV2,
-        components: [
-          panel(
-            "Confirm Removal",
-            `Removing:\n${selected.map((x) => `• ${pretty(x)}`).join("\n")}`,
-          ),
-          new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId(confirmId)
-              .setLabel("Confirm")
-              .setStyle(ButtonStyle.Danger),
-            new ButtonBuilder()
-              .setCustomId(cancelId)
-              .setLabel("Cancel")
-              .setStyle(ButtonStyle.Secondary),
-          ),
-        ],
+        components: [confirmPanel],
       });
     }
 

@@ -1,5 +1,4 @@
 const { MessageEmbed } = require('discord.js')
-this.config = require(`${process.cwd()}/config.json`)
 module.exports = {
     name: `serverslist`,
     category: `Owner`,

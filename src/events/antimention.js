@@ -24,7 +24,7 @@ async function handleAntinukeMention(client, message) {
   if (!message.mentions.everyone && message.mentions.roles.size === 0) return;
 
   const g = AntiNukeMemory.get(message.guild.id);
-  if (!g?.enabled) return;
+  if (!g?.enabled || g.modules?.antimention === false) return;
 
   _handleMention(client, message, g).catch((err) =>
     client.logger.error(`[ANTINUKE] Error in antiMention: ${err}`, err),

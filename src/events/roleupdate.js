@@ -60,6 +60,16 @@ module.exports = (client) => {
         return;
       }
 
+      if (g.protectedRoles?.has(newRole.id)) {
+        revertingRoles.add(newRole.id);
+        await newRole.setPermissions(oldRole.permissions, "Anti-Nuke: Protected role reverted").catch(() => {});
+        await newRole.setName(oldRole.name, "Anti-Nuke: Protected role reverted").catch(() => {});
+        setTimeout(() => revertingRoles.delete(newRole.id), 1500);
+        return;
+      }
+
+      if (g.modules?.antirole === false) return;
+
       const newlyDangerous = DANGEROUS_PERMISSIONS.filter(
         (perm) =>
           !oldRole.permissions.has(perm) && newRole.permissions.has(perm),

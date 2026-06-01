@@ -9,7 +9,7 @@ const wlkey = "member_ban";
 module.exports = (client) => {
   client.on("guildBanAdd", async (ban) => {
     const g = AntiNukeMemory.get(ban.guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antiban === false) return;
 
     try {
       const result = await resolveAudit(

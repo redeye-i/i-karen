@@ -10,11 +10,9 @@ const {
   MessageFlags,
 } = require("discord.js");
 
-this.config = require(`${process.cwd()}/config.json`);
-
 module.exports = (client) => {
   client.on("guildCreate", async (guild) => {
-    const LOG_CHANNEL_ID = this.config.botjoin;
+    const LOG_CHANNEL_ID = client.config.botjoin;
 
     const logChannel = client.channels.cache.get(LOG_CHANNEL_ID);
     if (!logChannel) return;

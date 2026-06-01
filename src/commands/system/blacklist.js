@@ -1,8 +1,6 @@
 const { Message, Client } = require('discord.js');
 const { USERS_PATTERN } = require('discord.js').MessageMentions;
 
-this.config = require(`${process.cwd()}/config.json`);
-
 module.exports = {
     name: 'blacklist',
     aliases: ['bl'],

@@ -18,10 +18,13 @@ module.exports = (client) => {
 
   client.on(Events.GuildCreate, async (guild) => {
     try {
-      await Antinuke.findByIdAndUpdate(guild.id, { $set: { deletedAt: null } });
-      client.logger.log(
-        `Server ${guild.name} rejoined. Deletion cleanup cancelled.`,
-      );
+      const existing = await Antinuke.findById(guild.id);
+      if (existing?.deletedAt) {
+        await Antinuke.findByIdAndUpdate(guild.id, { $set: { deletedAt: null } });
+        client.logger.log(
+          `Server ${guild.name} rejoined. Deletion cleanup cancelled.`,
+        );
+      }
     } catch (err) {
       client.logger.error("Error cancelling guild deletion:", err);
     }

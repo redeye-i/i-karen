@@ -24,7 +24,7 @@ const SENSITIVE_FIELDS = [
 module.exports = (client) => {
   client.on("guildUpdate", async (oldGuild, newGuild) => {
     const g = AntiNukeMemory.get(newGuild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antiserver === false) return;
 
     try {
       const changedFields = SENSITIVE_FIELDS.filter(

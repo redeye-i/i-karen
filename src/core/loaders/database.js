@@ -1,15 +1,20 @@
 const mongoose = require("mongoose");
 const Sql = require("better-sqlite3");
-const { database } = require("quickmongo");
+const quickmongo = require("quickmongo");
 const { Destroyer } = require("destroyer-fast-cache");
+const fs = require("fs");
 const path = require("path");
 
+const QuickMongoDatabase = quickmongo.Database || quickmongo.database;
+const databaseDir = path.join(process.cwd(), "database");
+
 function db(name) {
-    return path.join(process.cwd(), "database", name);
+    return path.join(databaseDir, name);
 }
 
 async function initSQL(client) {
-    client.logger.info("Connecting → SQL");
+    client.logger.info("Connecting to SQL");
+    fs.mkdirSync(databaseDir, { recursive: true });
 
     client.warn = new Sql(db("warns.db"));
     client.warn.pragma("journal_mode = WAL");
@@ -31,19 +36,19 @@ async function initSQL(client) {
     client.snipe.pragma("threads = 4");
     client.snipe.prepare(`
         CREATE TABLE IF NOT EXISTS snipes (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            guildId     TEXT,
-            channelId   TEXT,
-            content     TEXT,
-            author      TEXT,
-            authorId    TEXT,
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            guildId      TEXT,
+            channelId    TEXT,
+            content      TEXT,
+            author       TEXT,
+            authorId     TEXT,
             authorAvatar TEXT,
-            timestamp   INTEGER,
-            imageUrl    TEXT
+            timestamp    INTEGER,
+            imageUrl     TEXT
         )
     `).run();
 
-    const cols = client.snipe.prepare("PRAGMA table_info(snipes)").all().map(c => c.name);
+    const cols = client.snipe.prepare("PRAGMA table_info(snipes)").all().map((c) => c.name);
     if (!cols.includes("authorId"))
         client.snipe.prepare("ALTER TABLE snipes ADD COLUMN authorId TEXT DEFAULT NULL").run();
     if (!cols.includes("authorAvatar"))
@@ -63,20 +68,32 @@ async function initSQL(client) {
 }
 
 async function initMongo(client) {
-    client.logger.info("Connecting → MongoDB");
+    client.logger.info("Connecting to MongoDB");
 
-    client.db = new database(String(client.config.MONGO_DB));
-    await client.db.connect();
+    const mongoUri = client.config.MONGO_DB?.trim();
+    if (!mongoUri) {
+        throw new Error("MONGO_DB is missing in the environment");
+    }
+
+    if (!QuickMongoDatabase) {
+        throw new Error("quickmongo database export was not found");
+    }
 
     try {
-        await mongoose.connect(client.config.MONGO_DB, { maxPoolSize: 500 });
-        if (mongoose.connection.readyState === 1) {
-            client.logger.success("MongoDB connected");
-        } else {
-            client.logger.error(`MongoDB not connected (state: ${mongoose.connection.readyState})`);
+        if (mongoose.connection.readyState !== 1) {
+            await mongoose.connect(mongoUri, {
+                maxPoolSize: 100,
+                serverSelectionTimeoutMS: 15000,
+            });
         }
+
+        client.db = new QuickMongoDatabase(mongoUri);
+        await client.db.connect();
+
+        client.logger.success("MongoDB connected");
     } catch (err) {
-        client.logger.error(`MongoDB connection failed — ${err?.message ?? err}`);
+        client.logger.error(`MongoDB connection failed - ${err?.message ?? err}`);
+        throw err;
     }
 }
 

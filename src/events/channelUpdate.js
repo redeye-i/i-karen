@@ -22,7 +22,7 @@ module.exports = (client) => {
     if (!newChannel.guild) return;
 
     const g = AntiNukeMemory.get(newChannel.guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antichannel === false) return;
 
     try {
       const nameChanged = oldChannel.name !== newChannel.name;

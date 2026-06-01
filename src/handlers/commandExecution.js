@@ -7,8 +7,6 @@ const {
   MessageFlags,
 } = require("discord.js");
 
-this.config = require(`${process.cwd()}/config.json`);
-
 module.exports = {
   async executeCommand(client, message, command, args) {
     

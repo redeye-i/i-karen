@@ -101,12 +101,12 @@ async function whitelistadd(client, message, args) {
       })),
     );
 
+  const addPanel = buildPanel("Whitelist Add", `Target: ${target.tag}`);
+  addPanel.addActionRowComponents(new ActionRowBuilder().addComponents(menu));
+
   const msg = await message.reply({
     flags: MessageFlags.IsComponentsV2,
-    components: [
-      buildPanel("Whitelist Add", `Target: ${target.tag}`),
-      new ActionRowBuilder().addComponents(menu),
-    ],
+    components: [addPanel],
   });
 
   const collector = msg.createMessageComponentCollector({
@@ -122,24 +122,23 @@ async function whitelistadd(client, message, args) {
         selected = i.values;
       }
 
+      const confirmPanel = buildPanel("Confirm", `Target: ${target.tag}\n\nPermissions:\n${selected.map((x) => `• ${prettyName(x)}`).join("\n")}`);
+      confirmPanel.addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(confirmId)
+            .setLabel("Confirm")
+            .setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder()
+            .setCustomId(cancelId)
+            .setLabel("Cancel")
+            .setStyle(ButtonStyle.Secondary),
+        ),
+      );
+
       return i.update({
         flags: MessageFlags.IsComponentsV2,
-        components: [
-          buildPanel(
-            "Confirm",
-            `Target: ${target.tag}\n\nPermissions:\n${selected.map((x) => `• ${prettyName(x)}`).join("\n")}`,
-          ),
-          new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId(confirmId)
-              .setLabel("Confirm")
-              .setStyle(ButtonStyle.Success),
-            new ButtonBuilder()
-              .setCustomId(cancelId)
-              .setLabel("Cancel")
-              .setStyle(ButtonStyle.Secondary),
-          ),
-        ],
+        components: [confirmPanel],
       });
     }
 

@@ -1,13 +1,11 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 
-this.config = require(`${process.cwd()}/config.json`);
-
 module.exports = {
     name: 'eval',
     aliases: ['ev', 'jaduexe'],
     category: 'owner',
     run: async (client, message, args) => {
-        if (!this.config.owner.includes(message.author.id)) return;
+        if (!client.config.owner.includes(message.author.id)) return;
 
         const content = message.content.split(' ').slice(1).join(' ');
         const result = new Promise((resolve) => resolve(eval(content)));

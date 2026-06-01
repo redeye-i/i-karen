@@ -7,9 +7,10 @@ const mcooldown = new Set();
 
 module.exports = async (client) => {
     client.on('messageCreate', async (message) => {
-        if (message.author.bot || !message.guild) return;
-        checker(message);
+        if (!message.guild) return;
         handleAntinukeMention(client, message).catch(() => {});
+        if (message.author.bot) return;
+        checker(message);
         try {
             let check = await client.util.BlacklistCheck(message.guild)
             if (check) return;
@@ -23,10 +24,10 @@ module.exports = async (client) => {
 
                 client.util.setPrefix(message, client);
 
-                return client.util.container(message, `im feeling quite dizzy and can't respond right now.`);
+                return client.util.container(message, `use ``${message.guild.prefix || '!'}help` + ` to get the list of commands!`);
             }
 
-            let prefix = message.guild.prefix || '&';
+            let prefix = message.guild.prefix || '!';
             const mentionRegexPrefix = RegExp(`^<@!?${client.user.id}>`);
             const prefix1 = message.content.match(mentionRegexPrefix) ? message.content.match(mentionRegexPrefix)[0] : prefix;
             let datab = client.noprefix || [];

@@ -13,7 +13,7 @@ module.exports = (client) => {
     if (!guild) return;
 
     const g = AntiNukeMemory.get(guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antiintegration === false) return;
 
     try {
       const result = await resolveAudit(

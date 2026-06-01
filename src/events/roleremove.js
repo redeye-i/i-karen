@@ -65,7 +65,7 @@ module.exports = (client) => {
           .add(unbypassRoleId, "Anti-Nuke: Restoring unbypass role")
           .catch(() => { });
 
-        client.sntl.trackViolation(newMember.guild.id, g, "unbypass_remove");
+        client.sntl.trackViolation(newMember.guild, g, "unbypass_remove");
 
         if (!isProtectedExecutor) {
           await client.sntl.AntinukePunish(
@@ -100,7 +100,7 @@ module.exports = (client) => {
             .catch(() => { });
         }
 
-        client.sntl.trackViolation(newMember.guild.id, g, "quarantine_remove");
+        client.sntl.trackViolation(newMember.guild, g, "quarantine_remove");
 
         if (!isProtectedExecutor) {
           await client.sntl.AntinukePunish(

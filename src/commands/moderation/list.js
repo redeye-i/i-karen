@@ -4,7 +4,7 @@ const lodash = require('lodash');
 module.exports = {
     name: 'list',
     aliases: ['l'],
-    subcommand: ['admin', 'mod', 'bot', 'inrole', 'booster', 'roles', 'noroles', 'muted', 'joinpos', 'bans'],
+    subcommand: ['admin', 'admins', 'adminrole', 'mod', 'bot', 'inrole', 'booster', 'roles', 'noroles', 'muted', 'joinpos', 'bans'],
     category: 'mod',
     premium: false,
     run: async (client, message, args) => {
@@ -13,7 +13,7 @@ module.exports = {
                 `#  List Command\n\n` +
                 `Please provide a list type.\n\n` +
                 `**Available Options:**\n` +
-                `\`admin\`, \`mod\`, \`bot\`, \`inrole\`, \`booster\`, \`noroles\`, \`roles\`, \`muted\`, \`joinpos\`, \`bans\`\n\n` +
+                `\`admins\`, \`adminrole\`, \`mod\`, \`bot\`, \`inrole\`, \`booster\`, \`noroles\`, \`roles\`, \`muted\`, \`joinpos\`, \`bans\`\n\n` +
                 `**Example:** \`${message.guild.prefix || '&'}list admin\``
             );
         }
@@ -47,10 +47,18 @@ module.exports = {
             title = 'Roles in the Server';
         }
 
-        if (require === 'admin') {
+        if (require === 'admin' || require === 'admins') {
             const admin = await message.guild.members.fetch().then(members => members.filter(member => member.permissions.has('Administrator')));
             membersList = admin.map((member) => `${++index}. <@${member.id}> | ${member.id}`);
             title = 'Admins in the Server';
+        }
+
+        if (require === 'adminrole') {
+            const adminRoles = message.guild.roles.cache
+                .filter(role => role.id !== message.guild.id && role.permissions.has('Administrator'))
+                .sort((a, b) => b.position - a.position);
+            membersList = adminRoles.map((role) => `${++index}. <@&${role.id}> | ${role.id}`);
+            title = 'Administrator Roles in the Server';
         }
 
         if (require === 'mod') {

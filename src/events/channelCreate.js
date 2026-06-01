@@ -11,7 +11,7 @@ module.exports = (client) => {
     if (!channel.guild) return;
 
     const g = AntiNukeMemory.get(channel.guild.id);
-    if (!g?.enabled || !g.modules?.antichannel) return;
+    if (!g?.enabled || g.modules?.antichannel === false) return;
 
     try {
       const result = await resolveAudit(
@@ -33,10 +33,13 @@ module.exports = (client) => {
         return;
 
       client.sntl.trackViolation(channel.guild, g, "channel");
-      if (client.sntl.isTrusted(channel.guild, g, executorId, wlkey)) return;
-      await client.sntl
-        .enforceQuarantine(channel.guild, channel, g.quarantineRoleId)
-        .catch(() => {});
+      if (await client.sntl.isTrusted(channel.guild, g, executorId, wlkey))
+        return;
+      if (g.quarantineRoleId) {
+        await client.sntl
+          .enforceQuarantine(channel.guild, channel, g.quarantineRoleId)
+          .catch(() => {});
+      }
       await channel
         .delete("Anti-Nuke: Unauthorized channel creation")
         .catch(() => {});

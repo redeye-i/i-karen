@@ -1,7 +1,5 @@
 const { Client, Message } = require('discord.js');
 
-this.config = require(`${process.cwd()}/config.json`);
-
 const NP_KEY = 'noprefix_users';
 const now = () => Math.floor(Date.now() / 1000);
 async function getUserFromMentionOrID(message, input) {
@@ -45,7 +43,7 @@ module.exports = {
     category: 'owner',
 
     run: async (client, message, args) => {
-        if (!this.config.np.includes(message.author.id)) return;
+        if (!client.config.np.includes(message.author.id)) return;
 
         const prefix = message.guild.prefix;
         let data = (await client.db.get(NP_KEY)) || {};

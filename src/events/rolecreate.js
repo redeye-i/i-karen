@@ -9,7 +9,7 @@ const wlkey = "role_create";
 module.exports = (client) => {
   client.on("roleCreate", async (role) => {
     const g = AntiNukeMemory.get(role.guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antirole === false) return;
 
     try {
       const result = await resolveAudit(
@@ -29,7 +29,7 @@ module.exports = (client) => {
 
       client.sntl.trackViolation(role.guild, g, "role");
 
-      if (client.sntl.isTrusted(role.guild, g, executorId, wlkey)) return;
+      if (await client.sntl.isTrusted(role.guild, g, executorId, wlkey)) return;
       await role
         .delete("Anti-Nuke: Unauthorized role creation")
         .catch(() => {});

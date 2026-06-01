@@ -59,7 +59,7 @@ async function whitelistreset(client, message, args) {
     new ButtonBuilder()
       .setCustomId(confirmId)
       .setLabel("Reset Whitelist")
-      .setStyle(ButtonStyle.Danger),
+      .setStyle(ButtonStyle.Secondary),
 
     new ButtonBuilder()
       .setCustomId(cancelId)
@@ -67,15 +67,15 @@ async function whitelistreset(client, message, args) {
       .setStyle(ButtonStyle.Secondary),
   );
 
+  const resetPanel = panel(
+    "Whitelist Reset",
+    `The following users will be removed:\n\n${text}`,
+  );
+  resetPanel.addActionRowComponents(row);
+
   const msg = await message.reply({
     flags: MessageFlags.IsComponentsV2,
-    components: [
-      panel(
-        "Whitelist Reset",
-        `The following users will be removed:\n\n${text}`,
-      ),
-      row,
-    ],
+    components: [resetPanel],
   });
 
   const collector = msg.createMessageComponentCollector({

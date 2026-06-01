@@ -1,5 +1,3 @@
-this.config = require(`${process.cwd()}/config.json`);
-
 module.exports = {
     name: 'leaveserver',
     category: 'owner',

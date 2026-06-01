@@ -114,16 +114,17 @@ async function helpmenu(message, client) {
     new ButtonBuilder()
       .setCustomId("wl-panel")
       .setLabel("Whitelist Panel")
-      .setStyle(ButtonStyle.Primary),
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("wl-reset")
       .setLabel("Reset")
-      .setStyle(ButtonStyle.Danger)
+      .setStyle(ButtonStyle.Secondary)
   );
+  Ancontainer.addActionRowComponents(row);
 
   const responseMsg = await message.reply({
     flags: MessageFlags.IsComponentsV2,
-    components: [Ancontainer, row],
+    components: [Ancontainer],
   });
 
   const wlCollector = responseMsg.createMessageComponentCollector({

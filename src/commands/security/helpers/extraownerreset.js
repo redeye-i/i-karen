@@ -20,23 +20,26 @@ async function extraownerreset(client, message, args) {
   const confirmId = `eo_reset_cf_${message.id}`;
   const cancelId = `eo_reset_cl_${message.id}`;
 
-  const msg = await message.reply({
-    flags: MessageFlags.IsComponentsV2,
-    components: [
-      new ContainerBuilder().addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(`## Extra Owner Reset\nAre you sure you want to reset all extra owners?`),
-      ),
+  const resetPanel = new ContainerBuilder()
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`## Extra Owner Reset\nAre you sure you want to reset all extra owners?`),
+    )
+    .addActionRowComponents(
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(confirmId)
           .setLabel("Confirm")
-          .setStyle(ButtonStyle.Danger),
+          .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId(cancelId)
           .setLabel("Cancel")
           .setStyle(ButtonStyle.Secondary),
       ),
-    ],
+    );
+
+  const msg = await message.reply({
+    flags: MessageFlags.IsComponentsV2,
+    components: [resetPanel],
   });
 
   const collector = msg.createMessageComponentCollector({

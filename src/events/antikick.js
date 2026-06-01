@@ -9,7 +9,7 @@ const wlkey = "member_kick";
 module.exports = (client) => {
   client.on("guildMemberRemove", async (member) => {
     const g = AntiNukeMemory.get(member.guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antikick === false) return;
 
     try {
       const result = await resolveAudit(

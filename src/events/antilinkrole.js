@@ -20,7 +20,7 @@ module.exports = (client) => {
     if (newMember.id === client.user.id) return;
 
     const g = AntiNukeMemory.get(newMember.guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antilink === false) return;
 
     try {
       const addedRoles = newMember.roles.cache.filter(

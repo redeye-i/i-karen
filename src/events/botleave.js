@@ -7,11 +7,9 @@ const {
   MessageFlags,
 } = require("discord.js");
 
-this.config = require(`${process.cwd()}/config.json`);
-
 module.exports = (client) => {
   client.on("guildDelete", async (guild) => {
-    const LOG_CHANNEL_ID = this.config.botleave;
+    const LOG_CHANNEL_ID = client.config.botleave;
 
     const logChannel = client.channels.cache.get(LOG_CHANNEL_ID);
     if (!logChannel) return;

@@ -92,6 +92,8 @@ module.exports = (client) => {
       )
         return;
 
+      if (g.modules?.antirole === false) return;
+
       const dangerousRoles = addedRoles.filter((role) =>
         DANGEROUS_PERMISSIONS.some((perm) => role.permissions.has(perm)),
       );
@@ -102,7 +104,7 @@ module.exports = (client) => {
 
       if (
         !g.panic &&
-        client.sntl.isAllowed(newMember.guild, g, executorId, wlkey)
+        await client.sntl.isTrusted(newMember.guild, g, executorId, wlkey)
       )
         return;
 

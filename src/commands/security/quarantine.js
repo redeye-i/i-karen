@@ -14,7 +14,7 @@ const {
 } = require("discord.js");
 
 const AntiNukeMemory = require("../../core/antinukeMemory");
-const quarantineRelease = require("../../antinukehelper/quarantinerelease");
+const quarantineRelease = require("./helpers/quarantinerelease");
 
 
 
@@ -101,7 +101,7 @@ async function buildListComponents(guild, entries, page, perPage) {
           new ButtonBuilder()
             .setCustomId(`_noop_${id}`)
             .setLabel("Quarantined")
-            .setStyle(ButtonStyle.Danger)
+            .setStyle(ButtonStyle.Secondary)
             .setDisabled(true),
         ),
     );
@@ -161,12 +161,12 @@ function buildNavRow(page, totalEntries, perPage) {
     new ButtonBuilder()
       .setCustomId("q_refresh")
       .setLabel("Refresh")
-      .setStyle(ButtonStyle.Primary),
+      .setStyle(ButtonStyle.Secondary),
 
     new ButtonBuilder()
       .setCustomId("q_reset_all")
       .setLabel("Purge All")
-      .setStyle(ButtonStyle.Danger)
+      .setStyle(ButtonStyle.Secondary)
       .setDisabled(totalEntries === 0),
   );
 }
@@ -198,7 +198,7 @@ function buildInspectorRow(userId) {
     new ButtonBuilder()
       .setCustomId(`q_release_${userId}`)
       .setLabel("Release Subject")
-      .setStyle(ButtonStyle.Success),
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("q_back")
       .setLabel("« Back")
@@ -219,14 +219,16 @@ async function handleList(client, message) {
 
   let entries = freshEntries();
 
-  const buildFull = async () => ({
-    flags: MessageFlags.IsComponentsV2,
-    components: [
-      await buildListComponents(message.guild, entries, page, perPage),
-      await buildDropdown(message.guild, entries, page, perPage),
-      buildNavRow(page, entries.length, perPage),
-    ],
-  });
+  const buildFull = async () => {
+    const container = await buildListComponents(message.guild, entries, page, perPage);
+    container.addActionRowComponents(await buildDropdown(message.guild, entries, page, perPage));
+    container.addActionRowComponents(buildNavRow(page, entries.length, perPage));
+
+    return {
+      flags: MessageFlags.IsComponentsV2,
+      components: [container],
+    };
+  };
 
   const msg = await message.reply(await buildFull());
 
@@ -267,22 +269,22 @@ async function handleList(client, message) {
               "!",
             ),
           );
+        confirmContainer.addActionRowComponents(
+          new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId("q_confirm_reset")
+              .setLabel("Confirm Release All")
+              .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+              .setCustomId("q_abort_reset")
+              .setLabel("Abort")
+              .setStyle(ButtonStyle.Secondary),
+          ),
+        );
 
         return i.update({
           flags: MessageFlags.IsComponentsV2,
-          components: [
-            confirmContainer,
-            new ActionRowBuilder().addComponents(
-              new ButtonBuilder()
-                .setCustomId("q_confirm_reset")
-                .setLabel("Confirm — Release All")
-                .setStyle(ButtonStyle.Danger),
-              new ButtonBuilder()
-                .setCustomId("q_abort_reset")
-                .setLabel("Abort")
-                .setStyle(ButtonStyle.Secondary),
-            ),
-          ],
+          components: [confirmContainer],
         });
       }
 
@@ -347,13 +349,12 @@ async function handleList(client, message) {
           .fetch(userId)
           .catch(() => null);
         const tag = member ? member.user.tag : userId;
+        const inspector = buildInspector(userId, entry, tag);
+        inspector.addActionRowComponents(buildInspectorRow(userId));
 
         return i.update({
           flags: MessageFlags.IsComponentsV2,
-          components: [
-            buildInspector(userId, entry, tag),
-            buildInspectorRow(userId),
-          ],
+          components: [inspector],
         });
       }
 
@@ -374,29 +375,28 @@ async function handleList(client, message) {
         );
 
         if (res.success) {
+          const releasedPanel = simplePanel("Quarantine Released", `Subject \`${userId}\` has been released. Quarantine role stripped.`);
+          releasedPanel.addActionRowComponents(await buildDropdown(message.guild, entries, page, perPage));
+          releasedPanel.addActionRowComponents(buildNavRow(page, entries.length, perPage));
+
           return i.update({
             flags: MessageFlags.IsComponentsV2,
-            components: [
-              simplePanel(
-                "Quarantine  ·  Released",
-                `Subject \`${userId}\` has been released. Quarantine role stripped.`,
-              ),
-              await buildDropdown(message.guild, entries, page, perPage),
-              buildNavRow(page, entries.length, perPage),
-            ],
+            components: [releasedPanel],
           });
         } else {
+          const failedPanel = simplePanel("Quarantine Release Failed", res.reason);
+          failedPanel.addActionRowComponents(
+            new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                .setCustomId("q_back")
+                .setLabel("Back")
+                .setStyle(ButtonStyle.Secondary),
+            ),
+          );
+
           return i.update({
             flags: MessageFlags.IsComponentsV2,
-            components: [
-              simplePanel("Quarantine  ·  Release Failed", res.reason),
-              new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                  .setCustomId("q_back")
-                  .setLabel("« Back")
-                  .setStyle(ButtonStyle.Secondary),
-              ),
-            ],
+            components: [failedPanel],
           });
         }
       }
@@ -483,6 +483,50 @@ async function handleRelease(client, message, args) {
   }
 }
 
+async function handleView(client, message, args, data) {
+  const userId =
+    message.mentions.users.first()?.id ??
+    args.find((a) => /^\d{17,20}$/.test(a));
+
+  if (!userId) {
+    return message.reply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [
+        simplePanel(
+          "Quarantine View",
+          "Please mention a user or provide a valid user ID.\n\n`quarantine view @user`",
+        ),
+      ],
+    });
+  }
+
+  const entry = data.punishedUsers?.get(userId);
+  const member = await message.guild.members.fetch(userId).catch(() => null);
+  const tag = member ? member.user.tag : userId;
+  const hasRole = data.quarantineRoleId && member?.roles.cache.has(data.quarantineRoleId);
+
+  if (!entry && !hasRole) {
+    return message.reply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [simplePanel("Quarantine View", `No quarantine data found for \`${userId}\`.`)],
+    });
+  }
+
+  const container = new ContainerBuilder()
+    .addTextDisplayComponents(txt(`## Quarantine View`))
+    .addSectionComponents(row("Subject", `${tag}\n\`${userId}\``, "ID"))
+    .addSectionComponents(row("Role Applied", hasRole ? "Yes" : "No", "Role"))
+    .addSectionComponents(row("Reason", entry?.reason || "No reason recorded", "Reason"))
+    .addSectionComponents(row("Action", entry?.action || "quarantine", "Action"))
+    .addSectionComponents(row("Since", entry?.punishedAt ? formatTimestamp(new Date(entry.punishedAt).getTime()) : "Unknown", "Time"));
+
+  return message.reply({
+    flags: MessageFlags.IsComponentsV2,
+    components: [container],
+    allowedMentions: { repliedUser: true },
+  });
+}
+
 
 
 async function handleResetAll(client, message, data) {
@@ -510,22 +554,22 @@ async function handleResetAll(client, message, data) {
         "!",
       ),
     );
+  confirmContainer.addActionRowComponents(
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("qra_confirm")
+        .setLabel("Confirm Release All")
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId("qra_abort")
+        .setLabel("Abort")
+        .setStyle(ButtonStyle.Secondary),
+    ),
+  );
 
   const confirmMsg = await message.reply({
     flags: MessageFlags.IsComponentsV2,
-    components: [
-      confirmContainer,
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("qra_confirm")
-          .setLabel("Confirm — Release All")
-          .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
-          .setCustomId("qra_abort")
-          .setLabel("Abort")
-          .setStyle(ButtonStyle.Secondary),
-      ),
-    ],
+    components: [confirmContainer],
   });
 
   const collector = confirmMsg.createMessageComponentCollector({
@@ -637,6 +681,13 @@ function buildHelp() {
     )
     .addSectionComponents(
       row(
+        "quarantine view <@user | id>",
+        "Inspect stored quarantine reason, action, and role status.",
+        "view",
+      ),
+    )
+    .addSectionComponents(
+      row(
         "quarantine resetall",
         "Release all quarantined users at once.\nAliases: `reset` `clearall`",
         "resetall",
@@ -701,6 +752,10 @@ module.exports = {
       case "free":
       case "unquarantine":
         return handleRelease(client, message, args.slice(1));
+
+      case "view":
+      case "inspect":
+        return handleView(client, message, args.slice(1), data);
 
       case "resetall":
       case "reset":

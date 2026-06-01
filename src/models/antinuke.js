@@ -3,9 +3,19 @@ const mongoose = require("mongoose");
 const enabledmodules = new mongoose.Schema(
   {
     antiban: { type: Boolean, default: true },
+    antiunban: { type: Boolean, default: true },
     antikick: { type: Boolean, default: true },
     antibotadd: { type: Boolean, default: true },
     antilink: { type: Boolean, default: true },
+    antichannel: { type: Boolean, default: true },
+    antirole: { type: Boolean, default: true },
+    antiwebhook: { type: Boolean, default: true },
+    antiserver: { type: Boolean, default: true },
+    antiemoji: { type: Boolean, default: true },
+    antisticker: { type: Boolean, default: true },
+    antiintegration: { type: Boolean, default: true },
+    antithread: { type: Boolean, default: true },
+    antimention: { type: Boolean, default: true },
   },
   { _id: false },
 );
@@ -21,6 +31,10 @@ const AntinukeSchema = new mongoose.Schema(
     quarantineroleid: { type: String, default: null },
     panic: { type: Boolean, default: false },
     panicWhitelistRoles: {
+      type: [String],
+      default: [],
+    },
+    protectedRoles: {
       type: [String],
       default: [],
     },
@@ -41,6 +55,10 @@ const AntinukeSchema = new mongoose.Schema(
       type: Map,
       of: String,
       default: {},
+    },
+    securityBackup: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
     },
     quarantineData: {
       type: Map,

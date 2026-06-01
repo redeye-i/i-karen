@@ -9,7 +9,7 @@ const wlkey = "emoji_create";
 module.exports = (client) => {
   client.on("emojiCreate", async (emoji) => {
     const g = AntiNukeMemory.get(emoji.guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antiemoji === false) return;
 
     try {
       const result = await resolveAudit(

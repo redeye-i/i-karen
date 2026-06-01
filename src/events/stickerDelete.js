@@ -9,7 +9,7 @@ const wlkey = "sticker_delete";
 module.exports = (client) => {
   client.on("stickerDelete", async (sticker) => {
     const g = AntiNukeMemory.get(sticker.guildId);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antisticker === false) return;
 
     const guild = sticker.guild ?? client.guilds.cache.get(sticker.guildId);
     if (!guild) return;

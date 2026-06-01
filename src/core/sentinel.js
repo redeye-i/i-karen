@@ -25,6 +25,13 @@ class sentinel {
       kick: 7,
       channel: 10,
       role: 10,
+      botadd: 5,
+      mention: 5,
+      unban: 5,
+      webhook: 5,
+      linkroleadd: 5,
+      unbypass_remove: 3,
+      quarantine_remove: 3,
     };
     this.WINDOW = 10000;
     this.DANGEROUS_PERMS = [
@@ -366,7 +373,8 @@ class sentinel {
     const recent = bucket.filter((t) => now - t < this.WINDOW);
     g.buckets.set(type, recent);
 
-    if (recent.length >= this.THRESHOLDS[type] && !g.panic) {
+    const threshold = this.THRESHOLDS[type] ?? 10;
+    if (recent.length >= threshold && !g.panic) {
       this.activatePanicMode(guild, g);
     }
   }
@@ -504,14 +512,18 @@ class sentinel {
   }
 
   async quarantinedelete(guild, g) {
-    await handlequarantine(guild);
+    const quarantineReady = await this.handlequarantine(guild);
+    if (!quarantineReady) return null;
+
+    const fresh = AntiNukeMemory.get(guild.id);
+    if (fresh) g = fresh;
 
     const violators = g.punishedUsers;
     const quarantinerole = await guild.roles
       .fetch(g.quarantineRoleId)
       .catch(() => null);
 
-    if (!quarantinerole) return;
+    if (!quarantinerole) return null;
 
     for (const [userId] of violators) {
       const member = await guild.members.fetch(userId).catch(() => null);
@@ -531,6 +543,8 @@ class sentinel {
         );
       }
     }
+
+    return quarantinerole;
   }
 }
 

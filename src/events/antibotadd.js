@@ -11,7 +11,7 @@ module.exports = (client) => {
     if (!member.user.bot) return;
 
     const g = AntiNukeMemory.get(member.guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antibotadd === false) return;
 
     try {
       const result = await resolveAudit(

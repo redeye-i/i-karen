@@ -11,7 +11,7 @@ module.exports = (client) => {
     if (!thread.guild) return;
 
     const g = AntiNukeMemory.get(thread.guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antithread === false) return;
 
     try {
       const result = await resolveAudit(

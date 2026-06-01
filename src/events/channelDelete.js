@@ -11,7 +11,7 @@ module.exports = (client) => {
     if (!channel.guild) return;
 
     const g = AntiNukeMemory.get(channel.guild.id);
-    if (!g?.enabled) return;
+    if (!g?.enabled || g.modules?.antichannel === false) return;
 
     try {
       const result = await resolveAudit(

@@ -108,16 +108,17 @@ async function helpmenu(message, client) {
     new ButtonBuilder()
       .setCustomId("eo-panel")
       .setLabel("Manage Panel")
-      .setStyle(ButtonStyle.Primary),
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("eo-reset")
       .setLabel("Reset")
-      .setStyle(ButtonStyle.Danger)
+      .setStyle(ButtonStyle.Secondary)
   );
+  Ancontainer.addActionRowComponents(row);
 
   const responseMsg = await message.reply({
     flags: MessageFlags.IsComponentsV2,
-    components: [Ancontainer, row],
+    components: [Ancontainer],
   });
 
   const eoCollector = responseMsg.createMessageComponentCollector({

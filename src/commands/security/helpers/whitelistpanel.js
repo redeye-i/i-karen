@@ -43,19 +43,14 @@ async function whitelistpanel(client, message, args) {
 
   const buildList = async () => {
     const current = getPage();
-
     if (!current.length) return "No entries.";
 
-    let text = "";
-
+    const lines = [];
     for (const [id] of current) {
       const member = await message.guild.members.fetch(id).catch(() => null);
-
-      const name = member ? member.user.tag : id;
-      text += `**${name}**\n`;
+      lines.push(`**${member ? member.user.tag : id}**`);
     }
-
-    return text;
+    return lines.join("\n");
   };
 
   const buildDropdown = async () => {
@@ -67,19 +62,13 @@ async function whitelistpanel(client, message, args) {
           .setCustomId("select_user")
           .setPlaceholder("No users available")
           .setDisabled(true)
-          .addOptions([
-            {
-              label: "No data",
-              value: "none",
-            },
-          ]),
+          .addOptions([{ label: "No data", value: "none" }]),
       );
     }
 
     const options = await Promise.all(
       current.slice(0, 25).map(async ([id]) => {
         const member = await message.guild.members.fetch(id).catch(() => null);
-
         return {
           label: (member ? member.user.tag : id).slice(0, 100),
           value: id,
@@ -99,29 +88,30 @@ async function whitelistpanel(client, message, args) {
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("prev")
-        .setLabel("◀")
+        .setLabel("Prev")
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(page === 0),
-
       new ButtonBuilder()
         .setCustomId("next")
-        .setLabel("▶")
+        .setLabel("Next")
         .setStyle(ButtonStyle.Secondary)
         .setDisabled((page + 1) * perPage >= entries.length),
-
       new ButtonBuilder()
         .setCustomId("refresh")
         .setLabel("Refresh")
-        .setStyle(ButtonStyle.Primary),
+        .setStyle(ButtonStyle.Secondary),
     );
+
+  const buildMainContainer = async () => {
+    const container = panel("Whitelist Panel", await buildList());
+    container.addActionRowComponents(await buildDropdown());
+    container.addActionRowComponents(buildButtons());
+    return container;
+  };
 
   const msg = await message.reply({
     flags: MessageFlags.IsComponentsV2,
-    components: [
-      panel("Whitelist Panel", await buildList()),
-      await buildDropdown(),
-      buildButtons(),
-    ],
+    components: [await buildMainContainer()],
   });
 
   const collector = msg.createMessageComponentCollector({
@@ -135,55 +125,42 @@ async function whitelistpanel(client, message, args) {
         entries = Array.from(data.whitelist.entries());
       }
 
-      if (i.customId === "next") {
-        if ((page + 1) * perPage < entries.length) page++;
+      if (i.customId === "next" && (page + 1) * perPage < entries.length) {
+        page++;
       }
 
-      if (i.customId === "prev") {
-        if (page > 0) page--;
+      if (i.customId === "prev" && page > 0) {
+        page--;
       }
 
       if (i.customId === "select_user") {
         const userId = i.values[0];
-
-        if (userId === "none") {
-          return i.deferUpdate();
-        }
+        if (userId === "none") return i.deferUpdate();
 
         const perms = data.whitelist.get(userId) || [];
-
-        const member = await message.guild.members
-          .fetch(userId)
-          .catch(() => null);
-
+        const member = await message.guild.members.fetch(userId).catch(() => null);
         const name = member ? member.user.tag : userId;
+        const container = panel(
+          "User Inspector",
+          `**${name}**\n\n**Permanent Permissions:**\n${
+            perms.length ? perms.map((p) => `- ${pretty(p)}`).join("\n") : "None"
+          }`,
+        );
+        container.addActionRowComponents(buildButtons());
 
         return i.update({
           flags: MessageFlags.IsComponentsV2,
-          components: [
-            panel(
-              "User Inspector",
-              `**${name}**\n\n**Permanent Permissions:**\n${perms.length
-                ? perms.map((p) => `• ${pretty(p)}`).join("\n")
-                : "None"
-              }`,
-            ),
-            buildButtons(),
-          ],
+          components: [container],
         });
       }
 
       await i.update({
         flags: MessageFlags.IsComponentsV2,
-        components: [
-          panel("Whitelist Panel", await buildList()),
-          await buildDropdown(),
-          buildButtons(),
-        ],
+        components: [await buildMainContainer()],
       });
     } catch (err) {
       console.error("Collector Error:", err);
-      await i.deferUpdate().catch(() => { });
+      await i.deferUpdate().catch(() => {});
     }
   });
 
@@ -193,7 +170,7 @@ async function whitelistpanel(client, message, args) {
         flags: MessageFlags.IsComponentsV2,
         components: [panel("Panel Closed", "Session expired.")],
       })
-      .catch(() => { });
+      .catch(() => {});
   });
 }
 
