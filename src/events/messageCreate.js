@@ -15,16 +15,14 @@ module.exports = async (client) => {
             let check = await client.util.BlacklistCheck(message.guild)
             if (check) return;
 
-            client.util.setPrefix(message, client);
+            await client.util.setPrefix(message, client);
 
             if (message.content === `<@${client.user.id}>`) {
                 if (mcooldown.has(message.author.id)) return;
                 mcooldown.add(message.author.id);
                 setTimeout(() => mcooldown.delete(message.author.id), 4000);
 
-                client.util.setPrefix(message, client);
-
-                return client.util.container(message, `use ``${message.guild.prefix || '!'}help` + ` to get the list of commands!`);
+                return client.util.container(message, `use \`${message.guild.prefix || '&'}help\` to get the list of commands!`);
             }
 
             let prefix = message.guild.prefix || '!';
