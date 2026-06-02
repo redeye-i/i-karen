@@ -1,5 +1,6 @@
-# Karen
 
+# Karen
+![karen](image.png)
 Karen is a Discord.js v14 moderation and security bot focused on anti-nuke protection, quarantine handling, role protection, whitelist control, and general moderation utilities.
 
 The bot uses message commands. The default prefix is `&`, and each guild can change it with `&prefix <new_prefix>`.
